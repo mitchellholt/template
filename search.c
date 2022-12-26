@@ -4,4 +4,6 @@
 //
 // Functions to saerch the template directory for results and return them
 
+#include <stdbool.h>
+#include "search.h"
 
