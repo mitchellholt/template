@@ -10,7 +10,7 @@
 PriorityQueue *pq_init(int maxCapacity) {
     PriorityQueue *pq = malloc(sizeof(PriorityQueue));
     pq->maxCapacity = maxCapacity;
-    pq->elements = malloc(sizeof(struct element*));
+    pq->elements = malloc(sizeof(void*));
     pq->elements[0] = NULL;
     pq->length = 0;
     return pq;
@@ -29,10 +29,12 @@ void pq_free(PriorityQueue *pq) {
     free(pq);
 }
 
-void pq_add(PriorityQueue *pq, struct element *item) {
+// TODO
+void pq_add(PriorityQueue *pq, void *item) {
 
 }
 
-struct element *pq_remove(PriorityQueue *pq) {
-
+// TODO
+void *pq_remove(PriorityQueue *pq) {
+    return NULL;
 }

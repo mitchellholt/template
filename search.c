@@ -14,9 +14,11 @@
 #define INSERTION_WEIGHT 1
 #define DELETION_WEIGHT 1
 
-// SUFF FOR PRIORITY QUEUE
-// ****************************
-// ****************************
+// type of the elements in the priorityQueue
+struct element {
+    char *filename;
+    int distance;
+};
 
 char *get_templates_path(Params *params) {
     if (params->templatesPath) {
@@ -31,6 +33,7 @@ char *get_templates_path(Params *params) {
     return DEFAULT_DIRECTORY_PATH;
 }
 
+// TODO
 SearchResults *search(DIR *path, const char *query, bool extension) {
     struct dirent *entry;
     PriorityQueue *results = pq_init(5);
@@ -38,4 +41,6 @@ SearchResults *search(DIR *path, const char *query, bool extension) {
     while ((entry = readdir(path))) {
 
     }
+
+    return NULL;
 }
