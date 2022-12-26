@@ -1,6 +1,23 @@
 #ifndef SEARCH_H
-
 #define SEARCH_H
+
+#include <dirent.h>
+
+#define TEMPLATE_DIRECTORY_PATH "TEMPLATE_DIRECTORY"
+#define DEFAULT_DIRECTORY_PATH "~/Documents/Template/"
+
+typedef struct {
+    bool extension;
+    char *templatesPath;
+    char *newName;
+    char *query;
+} Params;
+
+// Struct containing a number-result map from the search function
+typedef struct {
+    int num; // the unique number assigned to this result
+    char *name; // the file name
+} SearchResults;
 
 /* get_template_path()
  * ----------------------------
@@ -11,13 +28,8 @@
  * 
  * Returns: A string representation of the path to the templates directory.
  */
-char *get_template_path(const char *override);
+char *get_templates_path(Params *params);
 
-// Struct containing a number-result map from the search function
-typedef struct {
-    int num; // the unique number assigned to this result
-    char *name; // the file name
-} SearchResults;
 
 /* search()
  * ----------------------------
@@ -30,6 +42,6 @@ typedef struct {
  * query: The search term
  * extension: The flag determining if extensions are to be considered.
  */
-SearchResults *search(const char *path, const char *query, bool extension);
+SearchResults *search(DIR *path, const char *query, bool extension);
 
 #endif
