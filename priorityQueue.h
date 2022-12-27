@@ -22,7 +22,8 @@ PriorityQueue *pq_init(int maxCapacity);
 
 /* pq_free()
  * ------------------------------------
- * Free all memory used by the given priority queue and its members.
+ * Free all memory used by the given priority queue and its members, but do Note
+ *  free the memory used by the elements of the queue.
  *
  * pq: The priority queue to be freed.
  */
@@ -31,16 +32,24 @@ void pq_free(PriorityQueue *pq);
 /* pq_add()
  * --------------------------------------
  * Add the given element to the given priority queue, updating the order if
- * neccesary.
+ *  neccesary. If an element was removed from the heap (to keep the length less
+ *  than the maximum capacity), return it.
  *
  * pq: The priority queue into which the new element is to be inserted
  * item: The item to be inserted
+ *
+ * Returns: If no item was removed from the queue to keep the length bounded,
+ *  return NULL. Otherwise return the item that was removed.
  */
-void pq_add(PriorityQueue *pq, void *item);
+void *pq_add(PriorityQueue *pq, void *item);
 
 /* pq_remove()
  * -----------------------------------
  * Remove the minimum element of the priority queue and rebalance the queue.
+ *
+ * pq: The priority queue from which to remove the minimum element
+ *
+ * Returns: NULL if pq is empty, otherwise the minimum element.
  */
 void *pq_remove(PriorityQueue *pq);
 
