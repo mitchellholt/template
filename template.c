@@ -53,12 +53,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (!params->query) {
-        fprintf(stderr,
-            "Usage: template new_name template_name [directory_path]\n");
-        return 1;
-    }
-
     char *directory_path = get_templates_path(params);
     DIR *dir;
     if (!(dir = opendir(directory_path))) {
@@ -67,4 +61,16 @@ int main(int argc, char **argv) {
     }
 
     SearchResults *results = search(dir, params->query, params->extension);
+
+    // print all results (type definition in search.h) to the screen, then read
+    // user input.
+
+    // If input is an integer 1 - 5, copy the associated filename and close dir
+
+    // Otherwise, treat whatever was entered as a new search term and call search
+    // again
+
+    closedir(dir);
+
+    params_clean(params);
 }
