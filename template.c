@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "search.h"
+#include <ctype.h>
+#include "file.h"
+
+#define MAX_SEARCH_RESULTS 5
 
 Params *params_init(void) {
     Params *params = malloc(sizeof(Params));
@@ -25,6 +29,10 @@ void params_clean(Params *params) {
     free(params);
 }
 
+/*
+ * Read a line from the given stream. If EOF is reached before any characters
+ *  can be read, return NULL.
+ */
 int main(int argc, char **argv) {
     if (argc < 3) {
         fprintf(stderr,
@@ -60,17 +68,59 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    SearchResults *results = search(dir, params->query, params->extension);
+    char **results = search(dir, params->query, params->extension);
+    char *selectedFile = NULL;
+    while (!selectedFile) {
+        // print all results (type definition in search.h) to the screen, then read
+        // user input.
+        printf("Please number to select a template, or enter a new search "
+                "term\n");
+        int numResults = 0;
+        for (; results[numResults]; numResults++) {
+            printf("(%i)  %s\n", numResults + 1, results[numResults]);
+        }
 
-    // print all results (type definition in search.h) to the screen, then read
-    // user input.
-
-    // If input is an integer 1 - 5, copy the associated filename and close dir
-
-    // Otherwise, treat whatever was entered as a new search term and call search
-    // again
-
+        char *input = read_line(stdin);
+        if (isdigit(input[0]) && !input[1]) {
+            int selectedNum = atoi(input);
+            if (selectedNum < 1 || selectedNum > numResults) continue;
+            selectedFile =
+                malloc(sizeof(char) * (strlen(results[selectedNum]) + 1));
+            strcpy(selectedFile, results[selectedNum]);
+            free(input);
+        } else {
+            for (int i = 0; results[i]; i++) {
+                free(results[i]);
+            }
+            free(results);
+            results = search(dir, input, params->extension);
+        }
+        free(input);
+    }
+    
+    for (int i = 0; results[i]; i++) {
+        free(results[i]);
+    }
+    free(results);
     closedir(dir);
 
+    params->templatesPath = realloc(params->templatesPath,
+            sizeof(char) *
+                (strlen(params->templatesPath) + strlen(selectedFile) + 2));
+    if (params->templatesPath[strlen(params->templatesPath) - 1] != '/') {
+        strcat(params->templatesPath, "/");
+    }
+    strcat(params->templatesPath, selectedFile);
+
+    bool copied = copy_file(params->templatesPath, params->newName);
+
     params_clean(params);
+
+    if (!copied) {
+        fprintf(stderr,
+                "One or more system calls failed when copying the template\n");
+        return 1;
+    }
+
+    return 0;
 }

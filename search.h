@@ -2,9 +2,10 @@
 #define SEARCH_H
 
 #include <dirent.h>
+#include <stdbool.h>
 
 #define TEMPLATE_DIRECTORY_PATH "TEMPLATE_DIRECTORY"
-#define DEFAULT_DIRECTORY_PATH "~/Documents/Template/"
+#define DEFAULT_DIRECTORY_PATH "~/Documents/Templates/"
 
 typedef struct {
     bool extension;
@@ -17,7 +18,7 @@ typedef struct {
 typedef struct {
     int num; // the unique number assigned to this result
     char *name; // the file name
-} SearchResults;
+} SearchResult;
 
 /* get_template_path()
  * ----------------------------
@@ -30,7 +31,6 @@ typedef struct {
  */
 char *get_templates_path(Params *params);
 
-
 /* search()
  * ----------------------------
  * Search the given path and return the five (if there are at least five files
@@ -42,6 +42,6 @@ char *get_templates_path(Params *params);
  * query: The search term
  * extension: The flag determining if extensions are to be considered.
  */
-SearchResults *search(DIR *path, const char *query, bool extension);
+char **search(DIR *path, const char *query, bool extension);
 
 #endif
