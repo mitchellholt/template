@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include "file.h"
+#include <errno.h>
 
 #define INITIAL_BUFFER_SIZE 80
 
@@ -35,6 +37,10 @@ char *read_line(FILE *stream) {
 }
 
 // TODO
-bool copy_file(char *existingPath, char *newName) {
-    return false;
+char *copy_file(char *existingPath, char *newName) {
+    errno = 0;
+    // system calls
+    int err = errno;
+    if (err) return strerror(err);
+    return NULL;
 }

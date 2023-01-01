@@ -10,10 +10,10 @@
 
 /*
  * Copy the file at existingPath to the current directory, renaming it to
- *  newName. If newName is NULL, assign it the name of the old file. Return true
- *  on success, or false if any system calls fail
+ *  newName. If newName is NULL, assign it the name of the old file. Return NULL
+ *  on success, or a pointer to a string containing an error message otherwise.
  */
-bool copy_file(char *existingPath, char *newName);
+char *copy_file(char *existingPath, char *newName);
 
 /* 
  * Return the next line from the given stream. If there is no more text to be

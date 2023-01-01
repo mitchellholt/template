@@ -9,8 +9,6 @@ struct element {
 
 struct element *element_init(int priority, void *obj);
 
-void element_clean(struct element *elem);
-
 // PriorityQueue type using heap implemented as an array
 typedef struct {
     struct element **elements; // dynamic array of elements of the queue

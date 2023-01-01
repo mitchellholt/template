@@ -98,7 +98,7 @@ char **search(DIR *path, const char *query, bool extension) {
         struct element *result = element_init(distance, entry->d_name);
         struct element *removed = pq_add(pq, result);
         if (removed) {
-            element_clean(removed);
+            free(removed);
         }
     }
 
@@ -109,7 +109,7 @@ char **search(DIR *path, const char *query, bool extension) {
         results = realloc(results, sizeof(char*) * (resultsCount + 1));
         char *name = malloc(sizeof(char) * (strlen(removed->obj) + 1));
         strcpy(name, removed->obj);
-        element_clean(removed);
+        free(removed);
         results[resultsCount++] = name;
     }
 

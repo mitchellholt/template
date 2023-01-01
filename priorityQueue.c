@@ -14,10 +14,6 @@ struct element *element_init(int priority, void *obj) {
     return elem;
 }
 
-void element_clean(struct element *elem) {
-    free(elem);
-}
-
 PriorityQueue *pq_init(int maxCapacity) {
     PriorityQueue *pq = malloc(sizeof(PriorityQueue));
     pq->maxCapacity = maxCapacity;

@@ -62,9 +62,9 @@ int main(int argc, char **argv) {
     }
 
     char *directory_path = get_templates_path(params);
-    DIR *dir;
-    if (!(dir = opendir(directory_path))) {
-        fprintf(stderr, "Cannot find directory %s\n", directory_path);
+    DIR *dir = opendir(directory_path);
+    if (!dir) {
+        perror("Cannot open template directory");
         return 2;
     }
 
@@ -97,6 +97,8 @@ int main(int argc, char **argv) {
         }
         free(input);
     }
+
+    params_clean(params);
     
     for (int i = 0; results[i]; i++) {
         free(results[i]);
@@ -104,21 +106,18 @@ int main(int argc, char **argv) {
     free(results);
     closedir(dir);
 
-    params->templatesPath = realloc(params->templatesPath,
+    directory_path = realloc(params->templatesPath,
             sizeof(char) *
-                (strlen(params->templatesPath) + strlen(selectedFile) + 2));
-    if (params->templatesPath[strlen(params->templatesPath) - 1] != '/') {
-        strcat(params->templatesPath, "/");
+                (strlen(directory_path) + strlen(selectedFile) + 2));
+    if (params->templatesPath[strlen(directory_path) - 1] != '/') {
+        strcat(directory_path, "/");
     }
-    strcat(params->templatesPath, selectedFile);
+    strcat(directory_path, selectedFile);
 
-    bool copied = copy_file(params->templatesPath, params->newName);
+    char *copied = copy_file(directory_path, params->newName);
 
-    params_clean(params);
-
-    if (!copied) {
-        fprintf(stderr,
-                "One or more system calls failed when copying the template\n");
+    if (copied) {
+        fprintf(stderr, "Could not copy template: %s\n", copied);
         return 1;
     }
 
