@@ -1,17 +1,21 @@
 # template
 
-Template manager for unix systems.
+Template manager for linux systems.
 
 ## Usage
 
-`template new_name template_name [template_directory_path]` searches the
-templates directory for `template_name` and, after the uses chooses an option
-(or optionally searches again with a different term), the template is copied
-into the working directory and renamed to `new_name`.
+```
+template <cmd> <args...>
+```
+The valid commands are
+- `ls`. List all template files (if any).
+- `from`. Create a new file from an existing template. The first argument must be the name of an
+  existing template. The second (optional) argument is the name to be given to a copy of the file in
+  the working directory.
+- `new`. Create a new template file. The first argument must be the name of the existing file to use as
+  a new template. The second (optional) argument is the name to be given to the new template.
+- `write`. Overwrite an existing template file with the contents of an existing file. The first argument
+  must be the name of the template, and the second the name of the existing file.
 
-If the `template_directory_path` argument is not supplied, the
-`TEMPLATE_DIRECTORY` environment variable is searched, then the default location
-`~/Documents/Templates/` will be used.
-
-The `-extension` (`-e`) flag can be used to filter search results by those
-with the same extension as the search query, including none.
+The template directory is stored in the `TEMPLATE_DIRECTORY` environment variable. If this is not set,
+then the default location`~/Documents/Templates/` will be used.
