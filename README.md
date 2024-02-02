@@ -19,3 +19,7 @@ The valid commands are
 
 The template directory is stored in the `TEMPLATE_DIRECTORY` environment variable. If this is not set,
 then the default location`~/Documents/Templates/` will be used.
+
+## Installation
+
+Clone this repository somewhere locally and run `make` to produce an executable.
