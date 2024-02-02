@@ -1,7 +1,6 @@
 #include "template.h"
 
 #include <dirent.h>
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,13 +21,12 @@ char *make_template_name(const char *template_filename)
     unsigned long length = strlen(template_filename);
     if ((env_path = getenv(TEMPLATE_ENV)))
     {
-        unsigned long env_len = strlen(env_path);
-        templates_path = malloc(sizeof(char) * (env_len + length + 1));
-        memcpy(templates_path, env_path, env_len);
+        unsigned long num_env_bytes = strlen(env_path) + 1;
+        templates_path = malloc(num_env_bytes + length);
+        memcpy(templates_path, env_path, num_env_bytes);
     }
     else
     {
-        assert(sizeof(default_template_directory) == 23); // char is 1 byte???
         templates_path = malloc(sizeof(default_template_directory) + length);
         memcpy(
                 templates_path,
