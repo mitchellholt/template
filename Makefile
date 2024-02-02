@@ -1,19 +1,14 @@
 CC=gcc
-CFLAGS = -Wall -Werror -pedantic -std=gnu99
+CFLAGS=-Wall -Werror -pedantic -std=gnu99
+PRG=template
 
-template: priorityQueue.o file.o search.o template.o
-	$(CC) $(CFLAGS) priorityQueue.o file.o search.o template.o -o $@
+$(PRG): main.c template.o
+	$(CC) $(CFLAGS) $< template.o -o $(PRG)
 
-template.o: template.c search.h file.h
-
-search.o: search.c search.h priorityQueue.h
-
-priorityQueue.o: priorityQueue.c priorityQueue.h
-
-file.o: file.c file.h
+template.o: template.c template.h
 
 debug: CFLAGS += -g
-debug: template
+debug: $(PRG)
 
 clean:
-	rm -f template *.o
+	rm -f *.o $(PRG)

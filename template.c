@@ -1,125 +1,168 @@
-// template.c
-//
-// Mitchell Holt, Dec 2022
+#include "template.h"
 
 #include <dirent.h>
+#include <assert.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "search.h"
-#include <ctype.h>
-#include "file.h"
+#include <fcntl.h>
+#include <unistd.h>
 
-#define MAX_SEARCH_RESULTS 5
 
-Params *params_init(void) {
-    Params *params = malloc(sizeof(Params));
-    params->extension = false;
-    params->templatesPath = NULL;
-    params->newName = NULL;
-    params->query = NULL;
-    return params;
+// Prepend env variable TEMPLATE_PATH (otherwise default path) to filename,
+// then attempt to open file.
+char *make_template_name(const char *template_filename)
+{
+    if (!template_filename) return NULL;
+    // Construct the path to the directory
+    // make it a static variable for sizeof, good code quality I guess
+    static const char default_template_directory[] = DEFAULT_TEMPLATE_DIRECTORY;
+    char *templates_path;
+    const char *env_path;
+    unsigned long length = strlen(template_filename);
+    if ((env_path = getenv(TEMPLATE_ENV)))
+    {
+        unsigned long env_len = strlen(env_path);
+        templates_path = malloc(sizeof(char) * (env_len + length + 1));
+        memcpy(templates_path, env_path, env_len);
+    }
+    else
+    {
+        assert(sizeof(default_template_directory) == 23); // char is 1 byte???
+        templates_path = malloc(sizeof(default_template_directory) + length);
+        memcpy(
+                templates_path,
+                default_template_directory,
+                sizeof(default_template_directory));
+    }
+
+    return strcat(templates_path, template_filename);
 }
 
-void params_clean(Params *params) {
-    free(params->templatesPath);
-    free(params->newName);
-    free(params->query);
-    free(params);
-}
 
-/*
- * Read a line from the given stream. If EOF is reached before any characters
- *  can be read, return NULL.
- */
-int main(int argc, char **argv) {
-    if (argc < 3) {
-        fprintf(stderr,
-            "Usage: template new_name template_name [directory_path]\n");
-        return 1;
-    }
+// Copy the file and close the file pointers. Return 
+enum Err copy_file(int from, int to)
+{
+    char buf[4096];
+    ssize_t nread;
+    while (nread = read(from, buf, sizeof buf), nread > 0)
+    {
+        char *out_ptr = buf;
+        ssize_t nwritten;
 
-    Params *params = params_init();
+        do {
+            nwritten = write(to, out_ptr, nread);
 
-    for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "-e") || !strcmp(argv[i], "-extension")) {
-            params->extension = true;
-        } else if (!params->newName) {
-            params->newName = malloc(sizeof(char) * (strlen(argv[i]) + 1));
-            strcpy(params->newName, argv[i]);
-        } else if (!params->query) {
-            params->query = malloc(sizeof(char) * (strlen(argv[i]) + 1));
-            strcpy(params->query, argv[i]);
-        } else if (!params->templatesPath) {
-            params->templatesPath = malloc(sizeof(char) * (strlen(argv[i]) + 1));
-            strcpy(params->templatesPath, argv[i]);
-        } else {
-            fprintf(stderr,
-                "Usage: template new_name template_name [directory_path]\n");
-            return 1;
-        }
-    }
-
-    char *directory_path = get_templates_path(params);
-    DIR *dir = opendir(directory_path);
-    if (!dir) {
-        perror("Cannot open template directory");
-        return 2;
-    }
-
-    char **results = search(dir, params->query, params->extension);
-    char *selectedFile = NULL;
-    while (!selectedFile) {
-        // print all results (type definition in search.h) to the screen, then read
-        // user input.
-        printf("Please number to select a template, or enter a new search "
-                "term\n");
-        int numResults = 0;
-        for (; results[numResults]; numResults++) {
-            printf("(%i)  %s\n", numResults + 1, results[numResults]);
-        }
-
-        char *input = read_line(stdin);
-        if (isdigit(input[0]) && !input[1]) {
-            int selectedNum = atoi(input);
-            if (selectedNum < 1 || selectedNum > numResults) continue;
-            selectedFile =
-                malloc(sizeof(char) * (strlen(results[selectedNum]) + 1));
-            strcpy(selectedFile, results[selectedNum]);
-            free(input);
-        } else {
-            for (int i = 0; results[i]; i++) {
-                free(results[i]);
+            if (nwritten >= 0)
+            {
+                nread -= nwritten;
+                out_ptr += nwritten;
             }
-            free(results);
-            results = search(dir, input, params->extension);
-        }
-        free(input);
+            else
+            {
+                close(from);
+                close(to);
+                return SYS_ERR;
+            }
+        } while (nread > 0);
+    }
+    close(from);
+    close(to);
+    return SUCCESS;
+}
+
+
+DIR *open_template_directory()
+{
+    char *templates_path;
+    if ((templates_path = getenv(TEMPLATE_ENV)))
+    {
+        return opendir(templates_path);
+    }
+    return opendir(DEFAULT_TEMPLATE_DIRECTORY);
+}
+
+
+const char *without_path(const char *filename)
+{
+    if (!filename) return NULL;
+    const char *ptr = strrchr(filename, '/');
+    return ptr ? ptr + 1 : filename;
+}
+
+
+enum Err new_template_file(const char *src_filename, const char *template_filename)
+{
+    int fd_from = open(src_filename, O_RDONLY);
+    if (fd_from < 0) return DOES_NOT_EXIST;
+
+    char *template_path = make_template_name(
+            template_filename
+                ? template_filename
+                : without_path(src_filename));
+    int fd_to = open(
+            template_path,
+            O_WRONLY | O_CREAT | O_EXCL,
+            S_IRUSR | S_IWUSR);
+    free(template_path);
+    if (fd_to < 0)
+    {
+        close(fd_from);
+        return DUPLICATE_NAME;
     }
 
-    params_clean(params);
-    
-    for (int i = 0; results[i]; i++) {
-        free(results[i]);
+    return copy_file(fd_from, fd_to);
+}
+
+
+enum Err from_template_file(const char *template_filename, const char *new_filename)
+{
+    char *template_path = make_template_name(template_filename);
+    int fd_from = open(template_path, O_RDONLY);
+    free(template_path);
+    if (fd_from < 0) return DOES_NOT_EXIST;
+
+    int fd_to = open(
+            new_filename ? new_filename : template_filename,
+            O_WRONLY | O_TRUNC | O_CREAT,
+            S_IRUSR | S_IWUSR);
+    if (fd_to < 0)
+    {
+        close(fd_from);
+        return SYS_ERR;
     }
-    free(results);
+
+    return copy_file(fd_from, fd_to);
+}
+
+
+enum Err write_template_file(const char *template_filename, const char *src_filename)
+{
+    int fd_from = open(src_filename, O_RDONLY);
+    if (fd_from < 0) return DOES_NOT_EXIST;
+
+    char *template_path = make_template_name(template_filename);
+    int fd_to = open(template_path, O_WRONLY | O_TRUNC);
+    free(template_path);
+    if (fd_to < 0)
+    {
+        close(fd_from);
+        return DOES_NOT_EXIST;
+    }
+
+    return copy_file(fd_from, fd_to);
+}
+
+
+enum Err list_template_files(void)
+{
+    struct dirent *entry;
+    DIR *dir = open_template_directory();
+    if (!dir) return DOES_NOT_EXIST;
+    while ((entry = readdir(dir)))
+    {
+        if (entry->d_type == DT_REG) printf("%s\n", entry->d_name);
+    }
     closedir(dir);
-
-    directory_path = realloc(params->templatesPath,
-            sizeof(char) *
-                (strlen(directory_path) + strlen(selectedFile) + 2));
-    if (params->templatesPath[strlen(directory_path) - 1] != '/') {
-        strcat(directory_path, "/");
-    }
-    strcat(directory_path, selectedFile);
-
-    char *copied = copy_file(directory_path, params->newName);
-
-    if (copied) {
-        fprintf(stderr, "Could not copy template: %s\n", copied);
-        return 1;
-    }
-
-    return 0;
+    return SUCCESS;
 }
